@@ -52,6 +52,12 @@
 // TELEMETRY 2.0 //RDKB-25996
 #include <telemetry_busmessage_sender.h>
 
+#ifdef UNIT_TEST_DOCKER_SUPPORT
+#define STATIC
+#else
+#define STATIC static
+#endif
+
 #ifdef INCLUDE_BREAKPAD
 #include "breakpad_wrapper.h"
 #endif
@@ -89,7 +95,7 @@ static inline int strcmp_s(const char *dst, int dmax, const char *src, int *r) {
 static void *bus_handle = NULL;
 
 static char dst_pathname_cr[64] =  {0};
-static char subsystem_prefix[32] = "";
+STATIC char subsystem_prefix[32] = "";
 
 #define MAX_PARAM 20000
 struct param_rtt
@@ -105,12 +111,12 @@ typedef struct
 }
 RETURN_VALUE_TO_STRING;
 
-static struct param_rtt *rtt_result = NULL;
+STATIC struct param_rtt *rtt_result = NULL;
 static int rtt_ct = 0;
 static int runSteps = __LINE__;
 static BOOL bVerbose = TRUE;
 
-static int param_rtt_cmp (const void *c1, const void *c2)
+STATIC int param_rtt_cmp (const void *c1, const void *c2)
 {
     return ((struct param_rtt *)c1)->rtt < ((struct param_rtt *)c2)->rtt;
 }
@@ -314,7 +320,7 @@ static int ccsp_type_from_name(char *name, enum dataType_e *type_ptr)
   return 0;
 }
 #ifndef INCLUDE_BREAKPAD
-static void ccsp_exception_handler(int sig, siginfo_t *info, void *context)
+STATIC void ccsp_exception_handler(int sig, siginfo_t *info, void *context)
 {
     UNREFERENCED_PARAMETER(context);
     int fd1;
@@ -394,7 +400,11 @@ static void ccsp_exception_handler(int sig, siginfo_t *info, void *context)
     fprintf( stderr, "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!! Dump Ending!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" );
     fprintf( stderr, "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
+#ifdef UNIT_TEST_DOCKER_SUPPORT
+    return;
+#else
     _exit(1);
+#endif
 }
 
 static void enable_ccsp_exception_handlers (void)
@@ -766,7 +776,7 @@ evt_callback (DBusConnection  *conn,
 #endif
 
 /* This function transfers bus return values to string*/
-static char *ccspReturnValueToString(unsigned long ret)
+STATIC char *ccspReturnValueToString(unsigned long ret)
 {
     int i = 0;
 
@@ -782,7 +792,7 @@ static char *ccspReturnValueToString(unsigned long ret)
 
 }
 
-static int apply_cmd(PCMD_CONTENT pInputCmd )
+STATIC int apply_cmd(PCMD_CONTENT pInputCmd )
 {
 //    void *bus_handle2;
     int ret ;
@@ -985,7 +995,6 @@ static int apply_cmd(PCMD_CONTENT pInputCmd )
 		printf("%s-%d:Coverity Error occured as Forward NULL in dst_componentid\n",__FUNCTION__,__LINE__);
 		return -1;
 	}
-
         if ( strncmp( pInputCmd->command, "addtable"     , 4 ) == 0 )
         {
             ret = CcspBaseIf_AddTblRow(
@@ -1775,7 +1784,7 @@ static void print_help (void)
 
 /* return >0, it's right input
     or else it's bad format  */
-static int analyse_cmd (char **args, PCMD_CONTENT pInputCmd)
+STATIC int analyse_cmd (char **args, PCMD_CONTENT pInputCmd)
 {
     char * pCmd = NULL;
     char * pPathname = NULL;
@@ -2086,7 +2095,7 @@ EXIT1:
     return 0;
 }
 
-static int analyse_interactive_cmd (char *inputLine, char **args)
+STATIC int analyse_interactive_cmd (char *inputLine, char **args)
 {
     int index = 0;
     int quote_flag = 0;
@@ -2135,15 +2144,13 @@ static int analyse_interactive_cmd (char *inputLine, char **args)
                 quote_flag = 0;
             }
         }
-        
         index++; /*next char*/
     }
-    
     return 1;
 }
 
 #ifndef INCLUDE_BREAKPAD
-static void signal_interrupt (int i)
+STATIC void signal_interrupt (int i)
 {
     UNREFERENCED_PARAMETER(i);
     return;
@@ -2166,7 +2173,12 @@ static void signal_interrupt (int i)
             print_help();
 
 
+
+#ifdef UNIT_TEST_DOCKER_SUPPORT
+int dmcli_main(int argc, char *argv[])
+#else
 int main (int argc, char *argv[])
+#endif
 {
 //    void *bus_handle2;
     int             ret = 0;
@@ -2349,7 +2361,6 @@ int main (int argc, char *argv[])
 
         runSteps = __LINE__;        
     }
-    
     // we begin the initiation of dbus
     ret = CCSP_Message_Bus_Init("ccsp.busclient", pCfg, &bus_handle, (CCSP_MESSAGE_BUS_MALLOC)Ansc_AllocateMemory_Callback, Ansc_FreeMemory_Callback);
     if ( ret == -1 )

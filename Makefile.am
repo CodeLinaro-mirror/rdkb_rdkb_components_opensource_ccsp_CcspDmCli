@@ -16,10 +16,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
+if UNIT_TEST_DOCKER_SUPPORT
+SUBDIRS = source/test
+else
 SUBDIRS = source
 SUBDIRS += source/MsgBusTestServer
 SUBDIRS += source/MsgBusTestClient
-
-if WITH_GTEST_SUPPORT
-SUBDIRS += source/test
 endif

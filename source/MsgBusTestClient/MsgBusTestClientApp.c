@@ -19,13 +19,13 @@
 
 /**********************************************************************
    Copyright [2014] [Cisco Systems, Inc.]
- 
+
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
- 
+
        http://www.apache.org/licenses/LICENSE-2.0
- 
+
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,6 +56,12 @@
 
 #define  COMPONENT_ID_TESTSERVER "eRT.com.cisco.spvtg.ccsp.testserver"
 #define  COMPONENT_PATH_TESTSERVER "/com/cisco/spvtg/ccsp/testserver"
+
+#ifdef UNIT_TEST_DOCKER_SUPPORT
+#define STATIC
+#else
+#define STATIC static
+#endif
 
 unsigned long timeout_uS = 1000 * 1000; // 1 Sec
 unsigned long setCount = 1;
@@ -112,7 +118,11 @@ static int discoverComp(void *handle, char *namespace, char **name, char **path,
     }
 }
 
+#ifdef UNIT_TEST_DOCKER_SUPPORT
+int MsgBusTestClientApp_main(int argc, char *argv[])
+#else
 int main(int argc, char *argv[])
+#endif
 {
     int ret = 0;
     int size = 0;
@@ -149,7 +159,7 @@ Usage : \n\
 \n", argv[0]);
         return 0;
     }
-     
+
     while (1) {
         int option_index = 0;
 
@@ -220,7 +230,11 @@ Usage : \n\
 
     if(interleaved && getCount != setCount) {
         printf("getCount must be equal to setCount for interleaved get & set test\n");
+#ifndef UNIT_TEST_DOCKER_SUPPORT
         exit(-1);
+#else
+        return -1;
+#endif
     }
 
     // we begin the initiation of dbus
@@ -264,10 +278,12 @@ Usage : \n\
                     nsDiscMetrics.count, nsDiscMetrics.min, nsDiscMetrics.max, nsDiscMetrics.total, nsDiscMetrics.average);
         }
         /* Coverity Fix CID:110503 RESOURCE_LEAK */
+#ifndef UNIT_TEST_DOCKER_SUPPORT
         free(ppDestComponentName);
         ppDestComponentName = NULL;
         free(ppDestPath);              //CID:155507
         ppDestPath = NULL;
+#endif
         return 0;
     }
 
@@ -319,11 +335,13 @@ Usage : \n\
                 AnscFreeMemory(pFaultParameter);
 
             usleep(timeout_uS);
-            
-            if(nsDiscOnGetSet)  
+
+            if(nsDiscOnGetSet)
              {
+ #ifndef UNIT_TEST_DOCKER_SUPPORT
                 free(ppDestPath);          //CID:155507
                 ppDestPath = NULL;
+#endif
              }
 
             if(interleaved)
@@ -372,16 +390,18 @@ Usage : \n\
 
             usleep(timeout_uS);
 
-            
-            if(nsDiscOnGetSet) 
-              { 
+
+            if(nsDiscOnGetSet)
+              {
+#ifndef UNIT_TEST_DOCKER_SUPPORT
                 free(ppDestPath);       //CID:155507  
                 ppDestPath = NULL;
+#endif
               }
-   
+
             if(interleaved)
                 break;
- 
+
         }
 
         if(interleaved) {
